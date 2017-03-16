@@ -72,12 +72,9 @@ public final class FunctionResolver
         if (name.equalsNativeFunction(TOKEN_FUNCTION_NAME))
             return new TokenFct(Schema.instance.getTableMetadata(receiverKs, receiverCf));
 
-        // The toJson() function can accept any type of argument, so instances of it are not pre-declared.  Instead,
-        // we create new instances as needed while handling selectors (which is the only place that toJson() is supported,
-        // due to needing to know the argument types in advance).
-        if (name.equalsNativeFunction(ToJsonFct.NAME))
-            throw new InvalidRequestException("toJson() may only be used within the selection clause of SELECT statements");
-
+        if (GenericFunctionRegistry.isGenericFunction(name))
+            throw new InvalidRequestException(String.format("generic function %s() may only be used within the selection clause", name));
+        
         // Similarly, we can only use fromJson when we know the receiver type (such as inserts)
         if (name.equalsNativeFunction(FromJsonFct.NAME))
         {

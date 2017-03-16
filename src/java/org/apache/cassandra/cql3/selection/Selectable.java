@@ -302,9 +302,9 @@ public interface Selectable extends AssignmentTestable
                 // We need to circumvent the normal function lookup process for toJson() because instances of the function
                 // are not pre-declared (because it can accept any type of argument). We also have to wait until we have the
                 // selector factories of the argument so we can access their final type.
-                if (functionName.equalsNativeFunction(ToJsonFct.NAME))
+                if (GenericFunctionRegistry.isGenericFunction(functionName))
                 {
-                    return new WithToJSonFunction(preparedArgs);
+                    return new WithGenericFunction(functionName, preparedArgs);
                 }
                 // Also, COUNT(x) is equivalent to COUNT(*) for any non-null term x (since count(x) don't care about it's argument outside of check for nullness) and
                 // for backward compatibilty we want to support COUNT(1), but we actually have COUNT(x) method for every existing (simple) input types so currently COUNT(1)
@@ -331,20 +331,22 @@ public interface Selectable extends AssignmentTestable
             }
         }
     }
-
-    public static class WithToJSonFunction implements Selectable
+    
+    public static class WithGenericFunction implements Selectable
     {
+        public final FunctionName functionName;
         public final List<Selectable> args;
 
-        private WithToJSonFunction(List<Selectable> args)
+        private WithGenericFunction(FunctionName functionName, List<Selectable> args)
         {
+            this.functionName = functionName;
             this.args = args;
         }
 
         @Override
         public String toString()
         {
-            return new StrBuilder().append(ToJsonFct.NAME)
+            return new StrBuilder().append(functionName)
                                    .append("(")
                                    .appendWithSeparators(args, ", ")
                                    .append(")")
@@ -354,7 +356,7 @@ public interface Selectable extends AssignmentTestable
         public Selector.Factory newSelectorFactory(TableMetadata table, AbstractType<?> expectedType, List<ColumnMetadata> defs, VariableSpecifications boundNames)
         {
             SelectorFactories factories = SelectorFactories.createFactoriesAndCollectColumnDefinitions(args, null, table, defs, boundNames);
-            Function fun = ToJsonFct.getInstance(factories.getReturnTypes());
+            Function fun = GenericFunctionRegistry.getInstance(functionName, factories.getReturnTypes());
             return AbstractFunctionSelector.newFactory(fun, factories);
         }
 

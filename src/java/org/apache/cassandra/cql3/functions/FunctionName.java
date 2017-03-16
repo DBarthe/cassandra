@@ -17,9 +17,10 @@
  */
 package org.apache.cassandra.cql3.functions;
 
-import com.google.common.base.Objects;
-
+import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.schema.SchemaConstants;
+
+import com.google.common.base.Objects;
 
 public final class FunctionName
 {
@@ -78,5 +79,13 @@ public final class FunctionName
     public String toString()
     {
         return keyspace == null ? name : keyspace + "." + name;
+    }
+    
+    /**
+     * @return Unique lowercase function name.
+     */
+    public String name() 
+    {
+        return (keyspace == null || keyspace.equals(SchemaConstants.SYSTEM_KEYSPACE_NAME) ? name : keyspace + "." + name).toLowerCase();
     }
 }
